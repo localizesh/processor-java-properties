@@ -9,8 +9,10 @@ const processor = new PropertiesProcessor();
 
 function processAndCompare(filename: string) {
   const inDoc = fs.readFileSync(path.join('test', 'fixtures', filename), { encoding: 'utf-8' });
-/*
+
   const doc = processor.parse(inDoc);
+
+  /*
  const docStr = JSON.stringify(doc);
 
 const outDoc = processor.stringify(doc);
