@@ -1,20 +1,6 @@
 import {LayoutRoot, LayoutElement, Context, IdGenerator, Segment, Document} from "@localizesh/sdk";
 import {visitParents} from "unist-util-visit-parents";
 
-const isLineContinued = (line: string): boolean => {
-    return /(\\\\)*\\$/.test(line);
-}
-const isTextComment = (line: string): boolean => {
-    const firstSymbol = line.trimLeft()[0];
-    return  firstSymbol === "!" || firstSymbol === "#";
-}
-
-const getKeyValueFromString = (str: string): {key: string, value: string} => {
-    const index = str.indexOf("=");
-    return {key: str.substring(0, index), value: str.substring(index + 1, str.length)};
-}
-
-
 enum PropertyRecordType {
     text = "text",
     comment = "comment",
@@ -30,6 +16,25 @@ type PropertyTextRecord = {
     type: PropertyRecordType.text,
     object: { key: string, value: string }
 }
+
+type SegmentsMap = {
+    [id: string]: Segment;
+};
+
+const isLineContinued = (line: string): boolean => {
+    return /(\\\\)*\\$/.test(line);
+}
+const isTextComment = (line: string): boolean => {
+    const firstSymbol = line.trimLeft()[0];
+    return  firstSymbol === "!" || firstSymbol === "#";
+}
+
+const getKeyValueFromString = (str: string): {key: string, value: string} => {
+    const index = str.indexOf("=");
+    return {key: str.substring(0, index), value: str.substring(index + 1, str.length)};
+}
+
+
 
 const stringToHast = (rootString: string) => {
     const lines: string[] = rootString.split(/\r?\n/);
@@ -169,7 +174,6 @@ const hastToDocument = (hastRoot: any, ctx: Context): Document => {
 
             if ("children" in node) {
                 const td = node.children[1];
-                debugger
 
                 if (td && "children" in td && td.children[0].type === "text") {
                     const textTypeNode = td.children[0];
@@ -185,12 +189,32 @@ const hastToDocument = (hastRoot: any, ctx: Context): Document => {
     return {segments, layout: hastRoot}
 }
 
+const documentToHast = (document: Document): LayoutRoot => {
+    const {layout, segments} = document;
+
+    const segmentsMap: SegmentsMap = {};
+
+    segments.forEach((segment: Segment): void => {
+        segmentsMap[segment.id] = segment;
+    });
+
+    visitParents(layout, "segment", (node: any, parent) => {
+            const currentParent = parent[parent.length - 1];
+            currentParent.children = [{type: "text", value: segmentsMap[node.id].text}];
+        }
+    )
+
+    return layout;
+}
+
 const properties: {
     stringToHast: (rootString: string) => LayoutRoot;
     hastToDocument: (hastRoot: any, ctx: Context) => Document;
+    documentToHast: (document: Document, ctx: Context) => LayoutRoot;
 } = {
     stringToHast,
-    hastToDocument
+    hastToDocument,
+    documentToHast
 }
 
 export default properties;
