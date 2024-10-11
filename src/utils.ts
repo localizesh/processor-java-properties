@@ -1,4 +1,5 @@
-import {LayoutRoot, LayoutElement} from "@localizesh/sdk";
+import {LayoutRoot, LayoutElement, Context, IdGenerator, Segment, Document} from "@localizesh/sdk";
+import {visitParents} from "unist-util-visit-parents";
 
 const isLineContinued = (line: string): boolean => {
     return /(\\\\)*\\$/.test(line);
@@ -72,7 +73,6 @@ const stringToHast = (rootString: string) => {
 
     const children = objectForHast.reduce((accum: LayoutElement[], propertyValue) => {
 
-        debugger
         if(propertyValue.type === PropertyRecordType.comment) {
 
             accum.push({
@@ -153,10 +153,44 @@ const stringToHast = (rootString: string) => {
         ]} as LayoutRoot;
 }
 
+const hastToDocument = (hastRoot: any, ctx: Context): Document => {
+    const idGenerator: IdGenerator = new IdGenerator();
+    const segments: Segment[] = [];
+
+    const setSegment = (text: string): string => {
+        const id: string = idGenerator.generateId(text, {}, ctx);
+        const segment = {text, id};
+        segments.push(segment);
+        return id;
+    }
+
+    visitParents(hastRoot, (node: any) =>
+        "tagName" in node && node?.tagName === "tr", (node) => {
+
+            if ("children" in node) {
+                const td = node.children[1];
+                debugger
+
+                if (td && "children" in td && td.children[0].type === "text") {
+                    const textTypeNode = td.children[0];
+                    const segmentId = setSegment(textTypeNode.value);
+
+                    const layoutSegment = {type: "segment", id: segmentId};
+                    td.children.splice(0, 1, layoutSegment);
+                }
+            }
+        }
+    )
+
+    return {segments, layout: hastRoot}
+}
+
 const properties: {
     stringToHast: (rootString: string) => LayoutRoot;
+    hastToDocument: (hastRoot: any, ctx: Context) => Document;
 } = {
-    stringToHast
+    stringToHast,
+    hastToDocument
 }
 
 export default properties;
