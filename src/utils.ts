@@ -177,7 +177,7 @@ const hastToDocument = (hastRoot: any, ctx: Context): Document => {
 
                 if (td && "children" in td && td.children[0].type === "text") {
                     const textTypeNode = td.children[0];
-                    const segmentId = setSegment(textTypeNode.value);
+                    const segmentId = setSegment(textTypeNode.value.trim());
 
                     const layoutSegment = {type: "segment", id: segmentId};
                     td.children.splice(0, 1, layoutSegment);
@@ -249,7 +249,7 @@ const hastToString = (rootHast: LayoutRoot): string => {
                 acc += propObject.text + (propObject.text.trim() ? lineBreak : "");
             } else if(propObject.type === PropertyRecordType.text) {
                 const {key, value} = propObject.object;
-                acc += `${key}=${value}` + lineBreak;
+                acc += `${key}= ${value}` + lineBreak;
             }
             return acc;
     }, "")
