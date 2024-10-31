@@ -207,14 +207,64 @@ const documentToHast = (document: Document): LayoutRoot => {
     return layout;
 }
 
+const hastToString = (rootHast: LayoutRoot): string => {
+
+    const hastToObjectsRecursive = (layoutElement: any) => {
+        if("tagName" in layoutElement && layoutElement.tagName === "tbody") {
+            return layoutElement.children.reduce((acc: Array<PropertyCommentRecord | PropertyTextRecord>, child: any, index: number) => {
+                const type = child.children[0]?.children[0]?.type;
+                if(type === PropertyRecordType.comment || type === PropertyRecordType.break) {
+                    acc.push({
+                        type,
+                        text: child.children[0]?.children[0]?.value || ""
+                    })
+                } else {
+                    acc.push({
+                        type,
+                        object: {
+                            key: child.children[0]?.children[0]?.value || "",
+                            value: child.children[1]?.children[0]?.value|| ""
+                        }
+                    })
+                }
+                return acc;
+            }, [])
+        }
+
+        if("children" in layoutElement) {
+            for (let child of layoutElement.children) {
+                return hastToObjectsRecursive(child);
+            }
+        }
+    }
+
+    const propertiesObjects = hastToObjectsRecursive(rootHast);
+
+    return propertiesObjects.reduce(
+        (acc: string, propObject: PropertyCommentRecord | PropertyTextRecord, index: number) => {
+
+            const isLast = index === propertiesObjects.length - 1;
+            const lineBreak = isLast ? "" : "\n";
+            if(propObject.type === PropertyRecordType.comment) {
+                acc += propObject.text + (propObject.text.trim() ? lineBreak : "");
+            } else if(propObject.type === PropertyRecordType.text) {
+                const {key, value} = propObject.object;
+                acc += `${key}=${value}` + lineBreak;
+            }
+            return acc;
+    }, "")
+}
+
 const properties: {
     stringToHast: (rootString: string) => LayoutRoot;
     hastToDocument: (hastRoot: any, ctx: Context) => Document;
     documentToHast: (document: Document, ctx: Context) => LayoutRoot;
+    hastToString:  (rootHast: LayoutRoot) => string;
 } = {
     stringToHast,
     hastToDocument,
-    documentToHast
+    documentToHast,
+    hastToString
 }
 
 export default properties;

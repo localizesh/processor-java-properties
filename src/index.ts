@@ -8,8 +8,7 @@ class PropertiesProcessor implements Processor {
     }
     stringify(document: Document, ctx?: Context): string {
         const hast = properties.documentToHast(document, ctx);
-
-        return "";
+        return properties.hastToString(hast);
     }
 }
 
