@@ -1,6 +1,6 @@
 {
-  "name": "@localizesh/processor-properties",
-  "repository": "localizesh/processor-properties",
+  "name": "@localizesh/processor-java-properties",
+  "repository": "localizesh/processor-java-properties",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
