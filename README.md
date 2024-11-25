@@ -1,1 +1,1 @@
-# processor-properties
+# processor-java-properties
